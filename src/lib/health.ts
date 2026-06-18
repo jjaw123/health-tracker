@@ -166,3 +166,17 @@ export function weightProgressPct(
   const currentDelta = currentKg - startKg;
   return clampPct((currentDelta / totalDelta) * 100);
 }
+
+// Body Mass Index from current weight and height. Rounded to 1 decimal.
+export function bmi(p: Pick<UserProfile, "weightKg" | "heightCm">): number {
+  const heightM = p.heightCm / 100;
+  if (heightM <= 0) return 0;
+  return Math.round((p.weightKg / (heightM * heightM)) * 10) / 10;
+}
+
+export function bmiLabel(bmiValue: number): string {
+  if (bmiValue < 18.5) return "Underweight";
+  if (bmiValue < 25) return "Normal";
+  if (bmiValue < 30) return "Overweight";
+  return "Obese";
+}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useStore, todaysFood, sumMacros, todaysSleep, latestWeight } from "@/lib/store";
+import { useStore, todaysFood, sumMacros, todaysSleep, latestWeight, logStreak } from "@/lib/store";
 import {
   calorieTarget,
   displayTargetWeight,
@@ -10,8 +10,9 @@ import {
   clampPct,
   weightProgressPct,
   kgToLbs,
+  macroTargets,
 } from "@/lib/health";
-import { Moon, Target, Plus, Camera } from "lucide-react";
+import { Moon, Target, Plus, Camera, Flame } from "lucide-react";
 import CalorieRing from "./calorie-ring";
 import WaterTracker from "./water-tracker";
 import LogSheet from "./log-sheet";
@@ -26,7 +27,11 @@ export default function DashboardHome({ onSnapMeal }: { onSnapMeal?: () => void 
   if (!profile) return null;
 
   const kcalTarget = calorieTarget(profile);
-  const todayCals = sumMacros(todaysFood(food)).calories;
+  const todayMacros = sumMacros(todaysFood(food));
+  const todayCals = todayMacros.calories;
+  const macroTargetsToday = macroTargets(profile);
+  const caloriesRemaining = kcalTarget - Math.round(todayCals);
+  const streak = logStreak(food);
   const todaySleep = todaysSleep(sleep);
   const currentWeight = latestWeight(weight, profile.weightKg);
   const startWeight = profile.startingWeightKg ?? profile.weightKg;
@@ -58,8 +63,16 @@ export default function DashboardHome({ onSnapMeal }: { onSnapMeal?: () => void 
           </h1>
           <p className="text-xs text-ink-muted">{today}</p>
         </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-tint text-brand text-xs font-bold">
-          {profile.name.charAt(0).toUpperCase()}
+        <div className="flex items-center gap-2.5">
+          {streak > 0 && (
+            <div className="flex items-center gap-1 rounded-full bg-protein/10 px-2.5 py-1 text-xs font-semibold text-protein">
+              <Flame size={13} />
+              <span className="tabular-nums">{streak}</span>
+            </div>
+          )}
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-tint text-brand text-xs font-bold">
+            {profile.name.charAt(0).toUpperCase()}
+          </div>
         </div>
       </motion.div>
 
@@ -67,10 +80,58 @@ export default function DashboardHome({ onSnapMeal }: { onSnapMeal?: () => void 
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.05 }}
-        className="card flex flex-col items-center py-6 space-y-1"
+        className="card flex flex-col items-center py-6 space-y-3"
       >
         <p className="text-xs text-ink-muted uppercase tracking-wide font-medium">Calories</p>
         <CalorieRing consumed={Math.round(todayCals)} target={kcalTarget} />
+        <p className="text-xs font-medium tabular-nums">
+          {caloriesRemaining >= 0 ? (
+            <span className="text-ink-muted">
+              <span className="text-brand font-semibold">{caloriesRemaining.toLocaleString()}</span> kcal remaining
+            </span>
+          ) : (
+            <span className="text-danger">
+              {Math.abs(caloriesRemaining).toLocaleString()} kcal over target
+            </span>
+          )}
+        </p>
+        <div className="grid w-full grid-cols-3 gap-2 px-2 pt-1">
+          {([
+            ["protein", "P", "var(--protein)"],
+            ["carbs", "C", "var(--carbs)"],
+            ["fat", "F", "var(--fat)"],
+          ] as const).map(([key, abbr, color]) => (
+            <div
+              key={key}
+              className="flex flex-col items-center gap-1 rounded-xl border border-line bg-white/[0.02] py-2"
+            >
+              <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: color }}
+                />
+                {abbr}
+              </span>
+              <span className="text-xs font-semibold tabular-nums text-ink">
+                {Math.round(todayMacros[key])}
+                <span className="text-ink-muted font-normal">/{macroTargetsToday[key]}g</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+      >
+        <button
+          onClick={onSnapMeal}
+          className="btn w-full gap-2 rounded-xl border-2 border-brand/30 bg-brand-tint py-4 text-sm font-semibold text-brand hover:border-brand/50"
+        >
+          <Camera size={18} /> Snap a Meal with AI
+        </button>
       </motion.div>
 
       <motion.div
@@ -103,19 +164,6 @@ export default function DashboardHome({ onSnapMeal }: { onSnapMeal?: () => void 
             className="btn w-full gap-1.5 rounded-xl border border-sleep/20 bg-sleep-tint py-2 text-xs font-medium text-sleep"
           ><Plus size={14} />Log Sleep</button>
         </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.12 }}
-      >
-        <button
-          onClick={onSnapMeal}
-          className="btn w-full gap-2 rounded-xl border-2 border-brand/30 bg-brand-tint py-4 text-sm font-semibold text-brand hover:border-brand/50"
-        >
-          <Camera size={18} /> Snap a Meal with AI
-        </button>
       </motion.div>
 
       <motion.div

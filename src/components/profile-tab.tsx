@@ -13,9 +13,11 @@ import {
   mlToOz,
   lbsToKg,
   kgToLbs,
+  bmi,
+  bmiLabel,
 } from "@/lib/health";
 import type { Unit } from "@/lib/health";
-import { User, Moon, Target, Ruler, Weight, RefreshCw, Flame, Droplets } from "lucide-react";
+import { User, Moon, Target, Ruler, Weight, RefreshCw, Flame, Droplets, Activity } from "lucide-react";
 
 export default function ProfileTab() {
   const profile = useStore((s) => s.profile);
@@ -25,12 +27,27 @@ export default function ProfileTab() {
 
   const [sleepGoal, setSleepGoal] = useState("");
   const [weightGoal, setWeightGoal] = useState("");
+  const [calorieGoal, setCalorieGoal] = useState("");
 
   if (!profile) return null;
 
   const isImperial = profile.unit === "imperial";
   const kcalTarget = calorieTarget(profile);
   const waterTarget = waterTargetMl(profile);
+  const bmiValue = bmi(profile);
+  const hasCustomCalories = profile.customCalorieTarget != null;
+
+  function handleSetCalories() {
+    const parsed = parseInt(calorieGoal, 10);
+    if (Number.isNaN(parsed) || parsed <= 0) return;
+    updateGoals({ calories: parsed });
+    setCalorieGoal("");
+  }
+
+  function handleClearCalories() {
+    updateGoals({ calories: undefined });
+    setCalorieGoal("");
+  }
 
   const weightPlaceholder = profile.targetWeightKg
     ? isImperial
@@ -92,6 +109,20 @@ export default function ProfileTab() {
             <p className="text-sm font-bold text-ink mt-0.5 capitalize">{profile.goal}</p>
           </div>
         </div>
+
+        <div className="flex items-center justify-between rounded-xl bg-ink/5 p-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-tint text-brand">
+              <Activity size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] text-ink-muted uppercase tracking-wide">Body Mass Index</p>
+              <p className="text-sm font-bold text-ink tabular-nums">
+                {bmiValue} <span className="font-medium text-ink-muted">· {bmiLabel(bmiValue)}</span>
+              </p>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
@@ -115,6 +146,33 @@ export default function ProfileTab() {
                 : `${waterTarget.toLocaleString()} ml`}
             </p>
           </div>
+        </div>
+
+        <div>
+          <label className="input-label flex items-center gap-1.5">
+            <Flame size={14} /> Custom Calorie Target
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={500}
+              max={10000}
+              step={10}
+              value={calorieGoal}
+              onChange={(e) => setCalorieGoal(e.target.value)}
+              placeholder={String(kcalTarget)}
+              className="input flex-1"
+            />
+            <button onClick={handleSetCalories} className="btn btn-primary px-4">Set</button>
+            {hasCustomCalories && (
+              <button onClick={handleClearCalories} className="btn btn-ghost px-3">Clear</button>
+            )}
+          </div>
+          <p className="text-xs text-ink-muted mt-1">
+            {hasCustomCalories
+              ? "Using your custom target. Clear to use the calculated value."
+              : "Leave unset to use the value calculated from your stats and goal."}
+          </p>
         </div>
 
         <div>

@@ -1,10 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { useStore, weeklySummaries } from "@/lib/store";
+import { useStore, nDaySummaries, logStreak } from "@/lib/store";
 import { calorieTarget, waterTargetMl, sleepTargetHours, kgToLbs, mlToOz } from "@/lib/health";
-import { BarChart3, TrendingUp, Moon, Droplets } from "lucide-react";
+import { BarChart3, TrendingUp, Moon, Droplets, Flame, PieChart } from "lucide-react";
 import MiniBarChart, { CHART_HEIGHT } from "@/components/mini-bar-chart";
+
+const MACRO_DONUT = [
+  { key: "protein", label: "Protein", color: "var(--protein)", kcalPerG: 4 },
+  { key: "carbs", label: "Carbs", color: "var(--carbs)", kcalPerG: 4 },
+  { key: "fat", label: "Fat", color: "var(--fat)", kcalPerG: 9 },
+] as const;
 
 export default function AnalyticsTab() {
   const profile = useStore((s) => s.profile);
@@ -13,10 +20,15 @@ export default function AnalyticsTab() {
   const sleep = useStore((s) => s.sleep);
   const weight = useStore((s) => s.weight);
 
+  const [range, setRange] = useState<7 | 30>(7);
+
   if (!profile) return null;
 
-  const days = weeklySummaries(food, water, sleep, weight);
-  const labels = days.map((d) => d.label);
+  const days = nDaySummaries(food, water, sleep, weight, range);
+  // For 30 days, only label week markers to avoid crowding.
+  const labels = days.map((d, i) =>
+    range === 30 ? (i === days.length - 1 || (days.length - 1 - i) % 7 === 0 ? d.label : "") : d.label
+  );
   const kcalTarget = calorieTarget(profile);
   const wTarget = waterTargetMl(profile);
   const slTarget = sleepTargetHours(profile);
@@ -24,6 +36,41 @@ export default function AnalyticsTab() {
   const maxCals = Math.max(...days.map((d) => d.calories), kcalTarget);
   const maxWater = Math.max(...days.map((d) => d.waterMl), wTarget);
   const maxSleep = Math.max(...days.map((d) => d.sleepHours), slTarget);
+
+  // Stats at a glance
+  const streak = logStreak(food);
+  const loggedDays = days.filter((d) => d.calories > 0);
+  const avgCals = loggedDays.length
+    ? Math.round(loggedDays.reduce((a, d) => a + d.calories, 0) / loggedDays.length)
+    : 0;
+  const sleptDays = days.filter((d) => d.sleepHours > 0);
+  const avgSleep = sleptDays.length
+    ? Math.round((sleptDays.reduce((a, d) => a + d.sleepHours, 0) / sleptDays.length) * 10) / 10
+    : 0;
+
+  // Macro breakdown donut (by calorie contribution over the period)
+  const macroGrams = MACRO_DONUT.map((m) => ({
+    ...m,
+    grams: Math.round(days.reduce((a, d) => a + d[m.key], 0)),
+  }));
+  const macroKcals = macroGrams.map((m) => ({ ...m, kcal: m.grams * m.kcalPerG }));
+  const totalMacroKcal = macroKcals.reduce((a, m) => a + m.kcal, 0);
+
+  const DONUT = 132;
+  const DONUT_STROKE = 18;
+  const donutR = (DONUT - DONUT_STROKE) / 2;
+  const donutC = 2 * Math.PI * donutR;
+  // Precompute each segment's dash length and starting offset. Offset is the sum
+  // of all preceding segments' dash lengths (no mutation during render).
+  const donutDashes = macroKcals.map((m) =>
+    (totalMacroKcal > 0 ? m.kcal / totalMacroKcal : 0) * donutC
+  );
+  const donutSegments = macroKcals.map((m, i) => ({
+    ...m,
+    dash: donutDashes[i],
+    offset: donutDashes.slice(0, i).reduce((a, d) => a + d, 0),
+    pct: totalMacroKcal > 0 ? Math.round((m.kcal / totalMacroKcal) * 100) : 0,
+  }));
 
   const weightPoints = days
     .map((day, index) => ({ day, index, weight: day.weight }))
@@ -44,10 +91,88 @@ export default function AnalyticsTab() {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 py-6 pb-28">
-      <motion.h1 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-        className="text-lg font-semibold tracking-tight text-ink flex items-center gap-2">
-        <BarChart3 size={18} className="text-brand" /> Progress
-      </motion.h1>
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold tracking-tight text-ink flex items-center gap-2">
+          <BarChart3 size={18} className="text-brand" /> Progress
+        </h1>
+        <div className="flex rounded-xl border border-line overflow-hidden text-xs font-medium">
+          {([7, 30] as const).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`px-3 py-1.5 transition-colors ${
+                range === r ? "bg-brand text-white" : "bg-surface text-ink-soft hover:text-ink"
+              }`}
+            >
+              {r}d
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Stats at a glance */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
+        className="grid grid-cols-3 gap-3">
+        <div className="card flex flex-col items-center gap-1 p-3 text-center">
+          <BarChart3 size={15} className="text-brand" />
+          <p className="text-base font-bold tabular-nums text-ink leading-none">{avgCals.toLocaleString()}</p>
+          <p className="text-[10px] text-ink-muted leading-tight">avg kcal<br />/ {kcalTarget.toLocaleString()}</p>
+        </div>
+        <div className="card flex flex-col items-center gap-1 p-3 text-center">
+          <Moon size={15} className="text-sleep" />
+          <p className="text-base font-bold tabular-nums text-ink leading-none">{avgSleep}h</p>
+          <p className="text-[10px] text-ink-muted leading-tight">avg sleep<br />/ {slTarget}h</p>
+        </div>
+        <div className="card flex flex-col items-center gap-1 p-3 text-center">
+          <Flame size={15} className="text-protein" />
+          <p className="text-base font-bold tabular-nums text-ink leading-none">{streak}</p>
+          <p className="text-[10px] text-ink-muted leading-tight">day<br />streak</p>
+        </div>
+      </motion.div>
+
+      {/* Macro breakdown donut */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}
+        className="card p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <PieChart size={14} className="text-brand" />
+          <h2 className="text-sm font-semibold text-ink">Macro Breakdown</h2>
+        </div>
+        {totalMacroKcal > 0 ? (
+          <div className="flex items-center gap-5">
+            <svg width={DONUT} height={DONUT} className="-rotate-90 shrink-0">
+              {donutSegments.map((m) => (
+                <circle
+                  key={m.key}
+                  cx={DONUT / 2}
+                  cy={DONUT / 2}
+                  r={donutR}
+                  fill="none"
+                  stroke={m.color}
+                  strokeWidth={DONUT_STROKE}
+                  strokeDasharray={`${m.dash} ${donutC - m.dash}`}
+                  strokeDashoffset={-m.offset}
+                />
+              ))}
+            </svg>
+            <div className="flex-1 space-y-2">
+              {donutSegments.map((m) => (
+                <div key={m.key} className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2 text-ink">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: m.color }} />
+                    {m.label}
+                  </span>
+                  <span className="tabular-nums text-ink-muted">
+                    {m.grams}g · <span className="font-semibold text-ink">{m.pct}%</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="py-8 text-center text-xs text-ink-muted">Log meals to see your macro split</p>
+        )}
+      </motion.div>
 
       {/* Weight trend line */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}

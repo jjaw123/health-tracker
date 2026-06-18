@@ -150,13 +150,15 @@ export const useStore = create<AppState>()(
         set((s) => {
           if (!s.profile) return s;
           const updatedProfile = { ...s.profile };
-          if (goals.sleep !== undefined) {
+          // Use key presence so callers can pass `undefined` to clear a goal
+          // (e.g. clearing a custom calorie target to fall back to computed TDEE).
+          if ("sleep" in goals) {
             updatedProfile.targetSleepDuration = goals.sleep;
           }
-          if (goals.weight !== undefined) {
+          if ("weight" in goals) {
             updatedProfile.targetWeightKg = goals.weight;
           }
-          if (goals.calories !== undefined) {
+          if ("calories" in goals) {
             updatedProfile.customCalorieTarget = goals.calories;
           }
           return { profile: updatedProfile };
@@ -242,8 +244,18 @@ export function weeklySummaries(
   sleep: SleepEntry[],
   weight: WeightEntry[]
 ): DaySummary[] {
+  return nDaySummaries(food, water, sleep, weight, 7);
+}
+
+export function nDaySummaries(
+  food: FoodEntry[],
+  water: WaterEntry[],
+  sleep: SleepEntry[],
+  weight: WeightEntry[],
+  n: number
+): DaySummary[] {
   const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  return pastDays(7).map((date) => {
+  return pastDays(n).map((date) => {
     const dayFood = food.filter((f) => isSameDay(f.createdAt, date));
     const macros = sumMacros(dayFood);
     
@@ -275,6 +287,26 @@ export function weeklySummaries(
       weight: weightVal,
     };
   });
+}
+
+/** Consecutive days (ending today) that have at least one food entry. */
+export function logStreak(food: FoodEntry[]): number {
+  if (food.length === 0) return 0;
+  let streak = 0;
+  const cursor = new Date();
+  // Allow the streak to "start" today even if nothing logged yet, by walking
+  // back from today and stopping at the first gap.
+  for (let i = 0; i < 365; i++) {
+    const hasEntry = food.some((f) => isSameDay(f.createdAt, cursor));
+    if (hasEntry) {
+      streak++;
+    } else if (i > 0) {
+      // A gap on a previous day ends the streak.
+      break;
+    }
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
 }
 
 export function sumMacros(food: FoodEntry[]) {

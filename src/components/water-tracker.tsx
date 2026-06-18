@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useStore, todaysWaterMl } from "@/lib/store";
 import { waterTargetMl, clampPct, mlToOz } from "@/lib/health";
 import { Plus, Undo2, Droplets } from "lucide-react";
@@ -15,13 +16,24 @@ export default function WaterTracker({ compact = false }: Props) {
   const addWater = useStore((s) => s.addWater);
   const undoLastWater = useStore((s) => s.undoLastWater);
 
+  const [showCustom, setShowCustom] = useState(false);
+  const [customAmount, setCustomAmount] = useState("");
+
   if (!profile) return null;
 
   const target = waterTargetMl(profile);
   const current = todaysWaterMl(water);
   const pct = clampPct((current / target) * 100);
   const isImperial = profile.unit === "imperial";
-  const quickAdds = isImperial ? [8, 16] : [250, 500];
+  const quickAdds = isImperial ? [8, 16, 24] : [250, 500, 750];
+
+  const submitCustom = () => {
+    const v = parseFloat(customAmount);
+    if (!Number.isFinite(v) || v <= 0) return;
+    addWater(isImperial ? Math.round(v * 29.5735) : Math.round(v));
+    setCustomAmount("");
+    setShowCustom(false);
+  };
 
   if (compact) {
     return (
@@ -62,7 +74,38 @@ export default function WaterTracker({ compact = false }: Props) {
               <Plus size={12} />{ml}{isImperial ? "oz" : "ml"}
             </button>
           ))}
+          <button
+            onClick={() => setShowCustom((v) => !v)}
+            aria-label="Custom amount"
+            className="btn shrink-0 rounded-lg border border-water/20 bg-water-tint px-2 py-1.5 text-[10px] font-medium text-water"
+          >
+            …
+          </button>
         </div>
+        <AnimatePresence initial={false}>
+          {showCustom && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex gap-1.5 overflow-hidden"
+            >
+              <input
+                type="number"
+                inputMode="decimal"
+                autoFocus
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitCustom()}
+                placeholder={isImperial ? "oz" : "ml"}
+                className="input flex-1 py-1.5 text-xs"
+              />
+              <button onClick={submitCustom} className="btn btn-primary px-3 py-1.5 text-xs">
+                Add
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -102,12 +145,31 @@ export default function WaterTracker({ compact = false }: Props) {
           <button
             key={ml}
             onClick={() => addWater(isImperial ? Math.round(ml * 29.5735) : ml)}
-            className="btn gap-1.5 rounded-xl border border-water/20 bg-water-tint px-4 py-2 text-sm font-medium text-water-deep hover:bg-water/20"
+            className="btn gap-1.5 rounded-xl border border-water/20 bg-water-tint px-3 py-2 text-sm font-medium text-water-deep hover:bg-water/20"
           >
             <Plus size={14} />
             {ml} {isImperial ? "oz" : "ml"}
           </button>
         ))}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          value={customAmount}
+          onChange={(e) => setCustomAmount(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && submitCustom()}
+          placeholder={`Custom amount (${isImperial ? "oz" : "ml"})`}
+          className="input flex-1"
+        />
+        <button
+          onClick={submitCustom}
+          disabled={!(parseFloat(customAmount) > 0)}
+          className="btn btn-primary px-4"
+        >
+          Add
+        </button>
         <button
           onClick={undoLastWater}
           className="btn gap-1 rounded-xl border border-line px-3 py-2 text-sm text-ink-muted hover:bg-ink/5"
