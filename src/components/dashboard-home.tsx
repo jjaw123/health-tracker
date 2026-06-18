@@ -12,7 +12,7 @@ import {
   kgToLbs,
   macroTargets,
 } from "@/lib/health";
-import { Moon, Target, Plus, Camera, Flame } from "lucide-react";
+import { Moon, Plus, Camera, Flame, Leaf } from "lucide-react";
 import CalorieRing from "./calorie-ring";
 import WaterTracker from "./water-tracker";
 import LogSheet from "./log-sheet";
@@ -48,79 +48,92 @@ export default function DashboardHome({ onSnapMeal }: { onSnapMeal?: () => void 
     ? `${kgToLbs(startWeight)} lb`
     : `${startWeight} kg`;
 
-  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  const now = new Date();
+  const today = now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const yearStart = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now.getTime() - yearStart.getTime()) / 86400000);
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 py-6 pb-28">
+    <div className="mx-auto flex max-w-lg flex-col gap-5 px-4 py-6 pb-28">
+      {/* Masthead */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="space-y-2"
       >
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-ink">
-            Hey, {profile.name}
-          </h1>
-          <p className="text-xs text-ink-muted">{today}</p>
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-center gap-1.5">
+            <Leaf size={15} className="text-brand" strokeWidth={2.2} />
+            <span className="font-display text-base font-semibold tracking-tight text-ink">Verdant</span>
+          </div>
+          <span className="dateline text-[11px] text-ink-muted">
+            No. {dayOfYear} · {today}
+          </span>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="rule" />
+        <div className="flex items-end justify-between pt-1">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+            {greeting},{" "}
+            <span className="italic text-brand-strong">{profile.name}</span>
+          </h1>
           {streak > 0 && (
-            <div className="flex items-center gap-1 rounded-full bg-protein/10 px-2.5 py-1 text-xs font-semibold text-protein">
+            <div className="flex items-center gap-1 rounded-full border border-weight/25 bg-weight-tint px-2.5 py-1 text-xs font-semibold text-weight">
               <Flame size={13} />
-              <span className="tabular-nums">{streak}</span>
+              <span className="dateline">{streak}</span>
             </div>
           )}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-tint text-brand text-xs font-bold">
-            {profile.name.charAt(0).toUpperCase()}
-          </div>
         </div>
       </motion.div>
 
+      {/* Calorie dial — the signature instrument */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.05 }}
-        className="card flex flex-col items-center py-6 space-y-3"
+        className="card flex flex-col items-center px-4 py-6"
       >
-        <p className="text-xs text-ink-muted uppercase tracking-wide font-medium">Calories</p>
-        <CalorieRing consumed={Math.round(todayCals)} target={kcalTarget} />
-        <p className="text-xs font-medium tabular-nums">
+        <span className="eyebrow">Today&apos;s Intake</span>
+        <div className="mt-4">
+          <CalorieRing consumed={Math.round(todayCals)} target={kcalTarget} />
+        </div>
+        <p className="mt-3 text-sm">
           {caloriesRemaining >= 0 ? (
-            <span className="text-ink-muted">
-              <span className="text-brand font-semibold">{caloriesRemaining.toLocaleString()}</span> kcal remaining
+            <span className="text-ink-soft">
+              <span className="dateline font-semibold text-brand-strong">{caloriesRemaining.toLocaleString()}</span>{" "}
+              kcal still on the table
             </span>
           ) : (
             <span className="text-danger">
-              {Math.abs(caloriesRemaining).toLocaleString()} kcal over target
+              <span className="dateline font-semibold">{Math.abs(caloriesRemaining).toLocaleString()}</span>{" "}
+              kcal over your target
             </span>
           )}
         </p>
-        <div className="grid w-full grid-cols-3 gap-2 px-2 pt-1">
+
+        <div className="mt-5 grid w-full grid-cols-3 gap-2.5">
           {([
-            ["protein", "P", "var(--protein)"],
-            ["carbs", "C", "var(--carbs)"],
-            ["fat", "F", "var(--fat)"],
-          ] as const).map(([key, abbr, color]) => (
+            ["protein", "Protein", "var(--protein)"],
+            ["carbs", "Carbs", "var(--carbs)"],
+            ["fat", "Fat", "var(--fat)"],
+          ] as const).map(([key, label, color]) => (
             <div
               key={key}
-              className="flex flex-col items-center gap-1 rounded-xl border border-line bg-white/[0.02] py-2"
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-line bg-bg-soft/60 py-2.5"
+              style={{ borderTop: `2px solid ${color}` }}
             >
-              <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: color }}
-                />
-                {abbr}
-              </span>
-              <span className="text-xs font-semibold tabular-nums text-ink">
+              <span className="eyebrow !text-[9px]">{label}</span>
+              <span className="dateline text-sm font-semibold text-ink">
                 {Math.round(todayMacros[key])}
-                <span className="text-ink-muted font-normal">/{macroTargetsToday[key]}g</span>
+                <span className="font-normal text-ink-muted">/{macroTargetsToday[key]}g</span>
               </span>
             </div>
           ))}
         </div>
       </motion.div>
 
+      {/* Primary action */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -128,12 +141,13 @@ export default function DashboardHome({ onSnapMeal }: { onSnapMeal?: () => void 
       >
         <button
           onClick={onSnapMeal}
-          className="btn w-full gap-2 rounded-xl border-2 border-brand/30 bg-brand-tint py-4 text-sm font-semibold text-brand hover:border-brand/50"
+          className="btn btn-primary w-full gap-2 py-4 text-[0.9375rem]"
         >
-          <Camera size={18} /> Snap a Meal with AI
+          <Camera size={18} /> Snap a meal
         </button>
       </motion.div>
 
+      {/* Water + Sleep */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -144,56 +158,53 @@ export default function DashboardHome({ onSnapMeal }: { onSnapMeal?: () => void 
 
         <div className="card p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sleep-tint text-sleep"><Moon size={14} /></div>
-              <span className="text-sm font-medium text-ink">Sleep</span>
-            </div>
-            <span className="text-xs tabular-nums text-ink-muted">
-              {todaySleep?.hours || 0}h/{sleepTarget}h
-            </span>
+            <span className="eyebrow">Sleep</span>
+            <Moon size={14} className="text-sleep" />
           </div>
-          <div className="h-2 w-full rounded-full bg-line overflow-hidden">
+          <div className="flex items-baseline gap-1">
+            <span className="dateline text-2xl font-semibold text-ink">{todaySleep?.hours || 0}</span>
+            <span className="dateline text-xs text-ink-muted">/ {sleepTarget}h</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-bg-soft overflow-hidden">
             <motion.div
               initial={{ width: 0 }} animate={{ width: `${sleepPct}%` }}
               transition={{ delay: 0.35, duration: 0.6 }}
-              className="h-full rounded-full bg-sleep" style={{ boxShadow: "0 0 8px var(--sleep-glow)" }}
+              className="h-full rounded-full bg-sleep"
             />
           </div>
           <button
             onClick={() => setLogSheet("sleep")}
-            className="btn w-full gap-1.5 rounded-xl border border-sleep/20 bg-sleep-tint py-2 text-xs font-medium text-sleep"
-          ><Plus size={14} />Log Sleep</button>
+            className="btn w-full gap-1.5 rounded-lg border border-sleep/25 bg-sleep-tint py-2 text-xs font-semibold text-sleep"
+          ><Plus size={14} />Log sleep</button>
         </div>
       </motion.div>
 
+      {/* Weight */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="card p-4 space-y-3"
+        className="card p-4 space-y-4"
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-weight-tint text-weight"><Target size={14} /></div>
-            <span className="text-sm font-medium text-ink">Weight Progress</span>
-          </div>
-          <span className="text-xs tabular-nums text-ink-muted">
-            {profile.unit === "imperial" ? `${kgToLbs(currentWeight)} lb` : `${currentWeight} kg`}
+          <span className="eyebrow">Weight</span>
+          <span className="dateline text-xs text-ink-muted">
+            now {profile.unit === "imperial" ? `${kgToLbs(currentWeight)} lb` : `${currentWeight} kg`}
           </span>
         </div>
 
-        <div className="flex items-center justify-between px-1">
-          <div className="text-center">
-            <p className="text-[10px] text-ink-muted">Start</p>
-            <p className="text-sm font-bold text-ink">{startWeightDisplay}</p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="eyebrow !text-[9px]">Start</p>
+            <p className="dateline text-base font-semibold text-ink mt-0.5">{startWeightDisplay}</p>
           </div>
-          <div className="flex-1 mx-3 relative h-1.5 rounded-full bg-line overflow-hidden">
+          <div className="flex-1 relative h-1 rounded-full bg-bg-soft overflow-hidden">
             {profile.targetWeightKg ? (
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${weightPct}%` }}
                 transition={{ delay: 0.4, duration: 0.7 }}
-                className="h-full rounded-full bg-weight" style={{ boxShadow: "0 0 8px var(--weight-glow)" }}
+                className="h-full rounded-full bg-weight"
               />
             ) : (
               <motion.div
@@ -204,22 +215,23 @@ export default function DashboardHome({ onSnapMeal }: { onSnapMeal?: () => void 
               />
             )}
           </div>
-          <div className="text-center">
-            <p className="text-[10px] text-ink-muted">Target</p>
-            <p className="text-sm font-bold text-ink">{displayTargetWeight(profile) || "—"}</p>
+          <div className="text-right">
+            <p className="eyebrow !text-[9px]">Target</p>
+            <p className="dateline text-base font-semibold text-ink mt-0.5">{displayTargetWeight(profile) || "—"}</p>
           </div>
         </div>
 
         {weightDiff !== 0 && (
-          <p className="text-center text-xs text-ink-muted">
-            {weightDiff < 0 ? "Lost" : "Gained"} {weightDiffDisplay}
+          <p className="text-center text-xs text-ink-soft">
+            {weightDiff < 0 ? "Down" : "Up"}{" "}
+            <span className="dateline font-semibold text-weight">{weightDiffDisplay}</span> since you started
           </p>
         )}
 
         <button
           onClick={() => setLogSheet("weight")}
-          className="btn w-full gap-1.5 rounded-xl border border-weight/20 bg-weight-tint py-2 text-xs font-medium text-weight"
-        ><Plus size={14} />Log Weight</button>
+          className="btn w-full gap-1.5 rounded-lg border border-weight/25 bg-weight-tint py-2 text-xs font-semibold text-weight"
+        ><Plus size={14} />Log weight</button>
       </motion.div>
 
       {logSheet && (

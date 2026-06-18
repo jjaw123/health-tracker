@@ -132,13 +132,17 @@ export default function FoodTab({ openCamera, onCameraOpened }: Props) {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 py-6 pb-28">
-      <motion.h1
+      <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-lg font-semibold tracking-tight text-ink flex items-center gap-2"
+        className="space-y-2"
       >
-        <Utensils size={18} className="text-brand" /> Food Log
-      </motion.h1>
+        <span className="eyebrow flex items-center gap-1.5">
+          <Utensils size={12} className="text-brand" /> The day&apos;s meals
+        </span>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">Meals</h1>
+        <div className="rule" />
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}

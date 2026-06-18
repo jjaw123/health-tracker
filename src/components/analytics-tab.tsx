@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useStore, nDaySummaries, logStreak } from "@/lib/store";
 import { calorieTarget, waterTargetMl, sleepTargetHours, kgToLbs, mlToOz } from "@/lib/health";
-import { BarChart3, TrendingUp, Moon, Droplets, Flame, PieChart } from "lucide-react";
+import { BarChart3, TrendingUp, Moon, Droplets, Flame, PieChart, LineChart } from "lucide-react";
 import MiniBarChart, { CHART_HEIGHT } from "@/components/mini-bar-chart";
 
 const MACRO_DONUT = [
@@ -92,23 +92,29 @@ export default function AnalyticsTab() {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 py-6 pb-28">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold tracking-tight text-ink flex items-center gap-2">
-          <BarChart3 size={18} className="text-brand" /> Progress
-        </h1>
-        <div className="flex rounded-xl border border-line overflow-hidden text-xs font-medium">
-          {([7, 30] as const).map((r) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className={`px-3 py-1.5 transition-colors ${
-                range === r ? "bg-brand text-white" : "bg-surface text-ink-soft hover:text-ink"
-              }`}
-            >
-              {r}d
-            </button>
-          ))}
+        className="space-y-2">
+        <div className="flex items-end justify-between">
+          <div className="space-y-2">
+            <span className="eyebrow flex items-center gap-1.5">
+              <LineChart size={12} className="text-brand" /> How the weeks read
+            </span>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">Trends</h1>
+          </div>
+          <div className="flex rounded-lg border border-line-strong overflow-hidden text-xs font-medium">
+            {([7, 30] as const).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                className={`dateline px-3 py-1.5 transition-colors ${
+                  range === r ? "bg-brand-strong text-[#f7faef]" : "bg-surface text-ink-soft hover:text-ink"
+                }`}
+              >
+                {r}d
+              </button>
+            ))}
+          </div>
         </div>
+        <div className="rule" />
       </motion.div>
 
       {/* Stats at a glance */}

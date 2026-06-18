@@ -25,15 +25,6 @@ export default function Dashboard() {
 
   return (
     <div className="relative min-h-dvh">
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-      >
-        <div className="animate-blob-1 absolute -left-24 top-1/4 h-72 w-72 rounded-full bg-brand/20 blur-3xl" />
-        <div className="animate-blob-2 absolute -right-20 top-2/3 h-64 w-64 rounded-full bg-sleep/15 blur-3xl" />
-        <div className="animate-blob-1 absolute bottom-1/4 left-1/3 h-56 w-56 rounded-full bg-water/15 blur-3xl [animation-delay:-8s]" />
-      </div>
-
       <AnimatePresence mode="wait">
         <motion.div
           key={tab}

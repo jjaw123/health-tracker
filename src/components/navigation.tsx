@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { House, Utensils, BarChart3, User } from "lucide-react";
+import { Sprout, Utensils, LineChart, User } from "lucide-react";
 
 export type Tab = "home" | "food" | "analytics" | "profile";
 
@@ -10,17 +10,17 @@ interface Props {
   onTab: (t: Tab) => void;
 }
 
-const TABS: { key: Tab; icon: typeof House; label: string }[] = [
-  { key: "home", icon: House, label: "Home" },
-  { key: "food", icon: Utensils, label: "Food" },
-  { key: "analytics", icon: BarChart3, label: "Progress" },
-  { key: "profile", icon: User, label: "Profile" },
+const TABS: { key: Tab; icon: typeof Sprout; label: string }[] = [
+  { key: "home", icon: Sprout, label: "Today" },
+  { key: "food", icon: Utensils, label: "Meals" },
+  { key: "analytics", icon: LineChart, label: "Trends" },
+  { key: "profile", icon: User, label: "You" },
 ];
 
 export default function Navigation({ active, onTab }: Props) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-safe pt-1 pointer-events-none">
-      <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-line bg-surface px-2 py-1.5 shadow-lg backdrop-blur-2xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-safe pt-2 pointer-events-none">
+      <div className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-line bg-surface px-1.5 py-1.5 shadow-lg">
         {TABS.map((t) => {
           const isActive = active === t.key;
           const Icon = t.icon;
@@ -28,7 +28,9 @@ export default function Navigation({ active, onTab }: Props) {
             <button
               key={t.key}
               onClick={() => onTab(t.key)}
-              className="relative flex flex-col items-center gap-0.5 px-4 py-2"
+              aria-label={t.label}
+              aria-current={isActive ? "page" : undefined}
+              className="relative flex flex-col items-center gap-1 rounded-xl px-4 py-1.5"
             >
               {isActive && (
                 <motion.div
@@ -37,23 +39,20 @@ export default function Navigation({ active, onTab }: Props) {
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
-              <motion.span
-                className="relative flex"
-                animate={{ scale: isActive ? 1.05 : 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              >
+              <span className="relative flex">
                 <Icon
-                  size={18}
+                  size={19}
+                  strokeWidth={isActive ? 2.4 : 1.9}
                   style={{
-                    color: isActive ? "var(--brand)" : "var(--ink-muted)",
+                    color: isActive ? "var(--brand-strong)" : "var(--ink-muted)",
                     transition: "color 0.2s",
                   }}
                 />
-              </motion.span>
+              </span>
               <span
-                className="relative text-[10px] font-medium"
+                className="dateline relative text-[9px] font-medium uppercase tracking-[0.1em]"
                 style={{
-                  color: isActive ? "var(--brand)" : "var(--ink-muted)",
+                  color: isActive ? "var(--brand-strong)" : "var(--ink-muted)",
                   transition: "color 0.2s",
                 }}
               >

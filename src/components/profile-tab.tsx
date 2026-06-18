@@ -74,10 +74,14 @@ export default function ProfileTab() {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4 px-4 py-6 pb-28">
-      <motion.h1 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-        className="text-lg font-semibold tracking-tight text-ink flex items-center gap-2">
-        <User size={18} className="text-brand" /> Profile
-      </motion.h1>
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+        className="space-y-2">
+        <span className="eyebrow flex items-center gap-1.5">
+          <User size={12} className="text-brand" /> Your standing
+        </span>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">You</h1>
+        <div className="rule" />
+      </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
         className="card p-5 space-y-4">

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/lib/store";
 import type { Sex, Goal, ActivityLevel, Unit } from "@/lib/health";
 import { ACTIVITY_LABELS, GOAL_LABELS } from "@/lib/health";
-import { ChevronLeft, ChevronRight, Check, Moon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Moon, Leaf } from "lucide-react";
 
 type Step = "bio" | "stats" | "lifestyle" | "goals";
 
@@ -107,8 +107,13 @@ export default function OnboardingForm() {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="card w-full max-w-md p-7 space-y-6"
       >
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">Verdant</h1>
+        <div className="flex flex-col items-center space-y-2 text-center">
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-strong text-white shadow-[0_4px_16px_var(--brand-glow)]">
+              <Leaf size={18} />
+            </span>
+            <h1 className="text-2xl font-bold tracking-tight text-ink">Verdant</h1>
+          </div>
           <p className="text-sm text-ink-soft">{STEPS[stepIdx].subtitle}</p>
         </div>
 

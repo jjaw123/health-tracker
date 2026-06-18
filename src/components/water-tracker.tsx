@@ -39,30 +39,26 @@ export default function WaterTracker({ compact = false }: Props) {
     return (
       <div className="card p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-water-tint text-water">
-              <Droplets size={14} />
-            </div>
-            <span className="text-sm font-medium text-ink">Water</span>
-          </div>
-          <span className="text-xs tabular-nums text-ink-muted">
-            {isImperial
-              ? `${mlToOz(current)}/${mlToOz(target)} oz`
-              : `${Math.round(current / 50) * 50}/${target} ml`}
-          </span>
+          <span className="eyebrow">Water</span>
+          <Droplets size={14} className="text-water" />
         </div>
         <div className="relative h-16 overflow-hidden rounded-xl border border-water/20 bg-water-tint">
           <motion.div
-            className="absolute bottom-0 left-0 right-0 overflow-hidden rounded-b-xl bg-water/30"
+            className="absolute bottom-0 left-0 right-0 overflow-hidden rounded-b-xl bg-water/35"
             initial={false}
             animate={{ height: `${pct}%` }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="wave-anim absolute bottom-0 h-4 w-[200%] bg-water/40" />
+            <div className="wave-anim absolute bottom-0 h-4 w-[200%] bg-water/45" />
           </motion.div>
-          <span className="absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums text-water">
-            {Math.round(pct)}%
-          </span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+            <span className="dateline text-base font-semibold text-water-deep">{Math.round(pct)}%</span>
+            <span className="dateline mt-0.5 text-[9px] text-water-deep/70">
+              {isImperial
+                ? `${mlToOz(current)}/${mlToOz(target)} oz`
+                : `${Math.round(current / 50) * 50}/${target} ml`}
+            </span>
+          </div>
         </div>
         <div className="flex gap-1.5">
           {quickAdds.map((ml) => (

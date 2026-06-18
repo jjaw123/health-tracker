@@ -1,28 +1,39 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Hanken_Grotesk, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Characterful soft-serif for headings and hero figures — set with restraint.
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Humanist grotesque for body and UI text.
+const hanken = Hanken_Grotesk({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+// Monospace for datelines, eyebrows, and tabular figures — the almanac voice.
+const splineMono = Spline_Sans_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "Verdant — Health & Hydration Tracker",
+  title: "Verdant — A daily almanac for your health",
   description:
-    "Snap your meals for instant AI calorie estimates, track macros, and keep your hydration on target.",
+    "Snap your meals for instant AI calorie estimates, track macros, sleep, and hydration — kept like a field journal of your days.",
 };
 
 export const viewport = {
-  themeColor: "#2f9e6f",
+  themeColor: "#eef1e6",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -33,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${hanken.variable} ${splineMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
